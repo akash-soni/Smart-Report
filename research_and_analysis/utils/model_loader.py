@@ -3,13 +3,17 @@ import sys
 import json
 from dotenv import load_dotenv
 from research_and_analysis.utils.config_loader import load_config
+
+# Load environment variables from .env file
+load_dotenv()
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_groq import ChatGroq
 from research_and_analysis.logger.custom_logger import GLOBAL_LOGGER as log
 #from research_and_analysis.logger.custom_logger import CustomLogger
-from research_and_analysis.exceptions.custom_exception import ResearchAnalystException
+from research_and_analysis.exception.custom_exception import ResearchAnalystException
 import asyncio
+from langchain_tavily import TavilySearch
 
 
 class ApiKeyManager:
@@ -18,6 +22,7 @@ class ApiKeyManager:
             "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
             "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
             "GROQ_API_KEY": os.getenv("GROQ_API_KEY"),
+            "TAVILY_API_KEY": os.getenv("TAVILY_API_KEY"),
             "ASTRA_DB_API_ENDPOINT": os.getenv("ASTRA_DB_API_ENDPOINT"),
             "ASTRA_DB_APPLICATION_TOKEN": os.getenv("ASTRA_DB_APPLICATION_TOKEN"),
             "ASTRA_DB_KEYSPACE": os.getenv("ASTRA_DB_KEYSPACE"),
@@ -114,6 +119,10 @@ class ModelLoader:
             log.error("Unsupported LLM provider", provider=provider)
             raise ValueError(f"Unsupported LLM provider: {provider}")
 
+    def load_tavily_api_key(self):
+        """Load and return Tavily API key."""
+        return self.api_key_mgr.get("TAVILY_API_KEY")
+
 
 if __name__ == "__main__":
     loader = ModelLoader()
@@ -129,3 +138,9 @@ if __name__ == "__main__":
     print(f"LLM Loaded: {llm}")
     result = llm.invoke("Hello, how are you?")
     print(f"LLM Result: {result.content}")
+
+    # Test Tavily API Key
+    tavily_key = loader.load_tavily_api_key()
+    print(f"Tavily API Key Loaded: {'Yes' if tavily_key else ' No'}")
+    tavily_search = TavilySearch(tavily_api_key=tavily_key)
+    print(tavily_search.invoke("langgraph"))
